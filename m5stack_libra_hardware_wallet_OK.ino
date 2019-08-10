@@ -4,8 +4,8 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
-#define WIFI_STA_NAME "Ice iPhoneX"
-#define WIFI_STA_PASS "ice123456"
+#define WIFI_STA_NAME "xxx"
+#define WIFI_STA_PASS "yyy"
 
 String page;
 

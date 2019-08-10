@@ -2,6 +2,12 @@
 
 (First?) Libra Hardware wallet. Built on M5Stack devices: Core, Grey, Fire compatible using KULAP libra services
 
+# Usages
+1. Open m5stack_libra_hardware_wallet_OK.ino in Arduino IDE
+2. Change SSID and Passphase for your WIFI (this is using for call libra services)
+3. Upload codes into M5Stack
+3. Enjoy !!
+
 # Screens
 ## 1. Login page
   
@@ -55,6 +61,7 @@ Example Output:
 - [ ] Mnemonic phase Encryption with AES (or other techniques)
 - [ ] BLE Connectivity and sign trx when login or transfer using web wallet
 - [ ] WIFI Selector (now not user friendly need to fix SSID and key in the code)
+- [ ] Offline mode without WIFI
 - [ ] More functions to make it pure ledger nano / Trazor for Libra
 
 # References:
