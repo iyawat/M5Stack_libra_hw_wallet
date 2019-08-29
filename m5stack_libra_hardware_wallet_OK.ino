@@ -3,11 +3,49 @@
 #include <EEPROM.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLE2902.h>
 
-#define WIFI_STA_NAME "xxx"
-#define WIFI_STA_PASS "yyy"
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+#define WIFI_STA_NAME "Ice iPhoneX"
+#define WIFI_STA_PASS "ice123456"
 
 String page;
+
+//----- BLE Variables -------//
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic = NULL;
+bool deviceConnected = false;
+
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      M5.Lcd.println("Connect");
+      deviceConnected = true;
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      M5.Lcd.println("Disconnect");
+      deviceConnected = false;
+    }
+};
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    M5.Lcd.println("Read");
+    pCharacteristic->setValue("Hello World!");
+  }
+  
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    M5.Lcd.println("Write");
+    std::string value = pCharacteristic->getValue();
+    M5.Lcd.println(value.c_str());
+  }
+};
+//-----------------------------------------------//
 
 //----- Keyboard Variables -------//
 char keymap[12] = {'<', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '/'};
@@ -298,6 +336,41 @@ void wallet() {
   }
 }
 
+void balance(String libra_address) {
+
+  String url = "https://libraservice2.kulap.io/getBalance";
+  Serial.println();
+  Serial.println("Getting Balance.. " + url + "/" + libra_address);
+
+  StaticJsonDocument<256> postData;
+  JsonObject root = postData.to<JsonObject>();
+  root["address"] = libra_address;
+  char JsonMessage[100];
+  serializeJsonPretty(root, JsonMessage);
+  Serial.println(JsonMessage);
+  
+  HTTPClient http;
+  http.begin(url);
+  http.addHeader("Content-Type", "application/json");
+  int httpCode = http.POST(JsonMessage);
+  if (httpCode == 200) {
+    String response = http.getString();
+
+    DynamicJsonDocument doc(2048);
+    deserializeJson(doc, response);
+
+    const String libra_balance = doc["balance"];
+    EEPROM_write(wallet_balance, libra_balance);
+  
+  } else {
+    Serial.println("Fail. error code " + String(httpCode));
+  }
+  M5.Lcd.setTextColor(TFT_MAGENTA, TFT_BLACK);
+  const String libra_balance = EEPROM_read(wallet_balance, 100);
+  M5.Lcd.drawString("Balance:", 10, 120, 4);
+  M5.Lcd.drawString(libra_balance, 10, 145, 2);
+}
+
 void setup(void) {
   M5.begin();
   EEPROM.begin(512);
@@ -314,6 +387,24 @@ void setup(void) {
     delay(500);
     Serial.print(".");
   }
+
+  BLEDevice::init("Libra-HW-Wallet");
+  BLEServer *pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic->setCallbacks(new MyCallbacks());
+  pCharacteristic->addDescriptor(new BLE2902());
+
+  pService->start();
+  BLEAdvertising *pAdvertising = pServer->getAdvertising();
+  pAdvertising->start();
   
   page = "login";
 }
@@ -372,6 +463,10 @@ void loop() {
           M5.Lcd.clear();
         } else {
           if (EEPROM_read(password_address, 65) == sha) {
+            M5.Lcd.setTextColor(TFT_RED, TFT_BLACK);
+            M5.Lcd.drawString("** Updating Wallet **", 50, 120, 4);
+            const String libra_address = EEPROM_read(wallet_address, 65);
+            balance(libra_address);
             page = "wallet";
             M5.Lcd.clear();
           } else {
@@ -391,6 +486,8 @@ void loop() {
     delay(1);
 
   } else if (page == "wallet") {
+    const String libra_address = EEPROM_read(wallet_address, 65);
+    const String libra_mnemonic = EEPROM_read(wallet_address, 300);
     wallet();
     
     M5.Lcd.setTextColor(TFT_MAGENTA, TFT_BLACK);
@@ -398,12 +495,18 @@ void loop() {
     M5.Lcd.drawString("Show QR", 40, 220, 2);
     M5.Lcd.drawString("Sign Trx", 140, 220, 2);
     M5.Lcd.drawString("Logout", 230, 220, 2);
-    const String libra_address = EEPROM_read(wallet_address, 65);
     
     if (M5.BtnA.wasReleased()) {
       M5.Lcd.clear();
       M5.Lcd.qrcode(libra_address);
       page = "qrcode";
+    }
+    if (M5.BtnB.wasReleased()) {
+      M5.Lcd.clear();
+      M5.Lcd.setTextSize(2);
+      M5.Lcd.println("Please connect BLE !!");
+      M5.Lcd.drawString("Close", 40, 220, 2);
+      page = "signtrx";
     }
     if (M5.BtnC.wasReleased()) {
       M5.Lcd.clear();
@@ -429,6 +532,29 @@ void loop() {
       M5.Lcd.clear();
       page = "wallet";
      }   
+  } else if (page == "signtrx") {
+   
+    const String libra_address = EEPROM_read(wallet_address, 65);
+    const String libra_mnemonic = EEPROM_read(wallet_key_address, 153);
+    M5.Lcd.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    M5.Lcd.setTextSize(2);
+    if (deviceConnected) {
+      if(M5.BtnB.wasPressed()) {
+        M5.Lcd.println("Wallet Connected !!");
+        String valuetoBLE = libra_address + "|" + libra_mnemonic;
+        char dataValue[220];
+        valuetoBLE.toCharArray(dataValue,valuetoBLE.length()+1);
+        //M5.Lcd.println(valuetoBLE);
+        pCharacteristic->setValue((uint8_t *)dataValue, sizeof(dataValue));
+        pCharacteristic->notify();
+      } 
+    } else {
+      if (M5.BtnA.wasReleased()) {
+        M5.Lcd.clear();
+        M5.Lcd.setTextSize(1);
+        page = "wallet";
+       }  
+    }
   }
 
   M5.update();
