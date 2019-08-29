@@ -11,8 +11,8 @@
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-#define WIFI_STA_NAME "Ice iPhoneX"
-#define WIFI_STA_PASS "ice123456"
+#define WIFI_STA_NAME "xxx"
+#define WIFI_STA_PASS "yyy"
 
 String page;
 
