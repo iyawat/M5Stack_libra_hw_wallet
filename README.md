@@ -29,6 +29,13 @@
   - Press 'C' keypad for logout
   - Hold 'C' keypad for 20 seconds to RESET all things  /* For test purpose only */..
 
+## 3. Sign Trx Page
+
+  Sign Transaction with Libra-Wallet-POC
+  https://github.com/kulapio/libra-wallet-poc
+
+  Press "Use HW Wallet" when prompt to select and then press 'B' button to sync data to Libra-Wallet-POC app
+
 # Libra Services
 
 Libra Services from KULAP.io 
@@ -59,7 +66,7 @@ Example Output:
 ## Todo
 - [X] Creating wallet and store keys in EEPROM
 - [ ] Mnemonic phase Encryption with AES (or other techniques)
-- [ ] BLE Connectivity and sign trx when login or transfer using web wallet
+- [X] BLE Connectivity and sign trx when login or transfer using web wallet
 - [ ] WIFI Selector (now not user friendly need to fix SSID and key in the code)
 - [ ] Offline mode without WIFI
 - [ ] More functions to make it pure ledger nano / Trazor for Libra
