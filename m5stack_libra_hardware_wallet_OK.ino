@@ -8,11 +8,11 @@
 #include <BLEServer.h>
 #include <BLE2902.h>
 
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define SERVICE_UUID        "c03e7090-7ce0-46f0-98dd-a2aba8367741"
+#define CHARACTERISTIC_UUID "26e2b12b-85f0-4f3f-9fdd-91d114270e6e"
 
-#define WIFI_STA_NAME "xxx"
-#define WIFI_STA_PASS "yyy"
+#define WIFI_STA_NAME "Ice iPhoneX"
+#define WIFI_STA_PASS "ice123456"
 
 String page;
 
@@ -35,12 +35,12 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
-    M5.Lcd.println("Read");
+    //M5.Lcd.println("Read");
     pCharacteristic->setValue("Hello World!");
   }
   
   void onWrite(BLECharacteristic *pCharacteristic) {
-    M5.Lcd.println("Write");
+    //M5.Lcd.println("Write");
     std::string value = pCharacteristic->getValue();
     M5.Lcd.println(value.c_str());
   }
@@ -60,6 +60,7 @@ String okeystring;
 int password_address = 0;       // Password LEN = 65
 int wallet_address = 100;       // Wallet_address LEN = 65
 int wallet_balance = 200;       // Wallet_balance
+int wallet_key_address_len = 250;   // Wallet_key LEN = 153
 int wallet_key_address = 300;   // Wallet_key LEN = 153
 //---------------------------//
 
@@ -317,6 +318,9 @@ void wallet() {
       const String libra_balance = doc["balance"];
   
       EEPROM_write(wallet_key_address, libra_key);
+      EEPROM_write(wallet_key_address_len, (String) libra_key.length());
+      Serial.println(libra_key);
+      Serial.println(libra_key.length());
       EEPROM_write(wallet_address, libra_address);
       EEPROM_write(wallet_balance, libra_balance);
       M5.Lcd.clear();
@@ -388,7 +392,7 @@ void setup(void) {
     Serial.print(".");
   }
 
-  BLEDevice::init("Libra-HW-Wallet");
+  BLEDevice::init("libra-hw-wallet");
   BLEServer *pServer = BLEDevice::createServer();
   pServer->setCallbacks(new MyServerCallbacks());
   BLEService *pService = pServer->createService(SERVICE_UUID);
@@ -487,7 +491,7 @@ void loop() {
 
   } else if (page == "wallet") {
     const String libra_address = EEPROM_read(wallet_address, 65);
-    const String libra_mnemonic = EEPROM_read(wallet_address, 300);
+    //const String libra_mnemonic = EEPROM_read(wallet_key_address, 160);
     wallet();
     
     M5.Lcd.setTextColor(TFT_MAGENTA, TFT_BLACK);
@@ -535,12 +539,14 @@ void loop() {
   } else if (page == "signtrx") {
    
     const String libra_address = EEPROM_read(wallet_address, 65);
-    const String libra_mnemonic = EEPROM_read(wallet_key_address, 153);
+    const String libra_mnemonic_len = EEPROM_read(wallet_key_address_len, 3);
+    const String libra_mnemonic = EEPROM_read(wallet_key_address, libra_mnemonic_len.toInt());
     M5.Lcd.setTextColor(TFT_MAGENTA, TFT_BLACK);
     M5.Lcd.setTextSize(2);
     if (deviceConnected) {
       if(M5.BtnB.wasPressed()) {
         M5.Lcd.println("Wallet Connected !!");
+        Serial.println(libra_mnemonic);
         String valuetoBLE = libra_address + "|" + libra_mnemonic;
         char dataValue[220];
         valuetoBLE.toCharArray(dataValue,valuetoBLE.length()+1);
