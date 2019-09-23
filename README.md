@@ -36,6 +36,47 @@
 
   Press "Use HW Wallet" when prompt to select and then press 'B' button to sync data to Libra-Wallet-POC app
 
+# M5StickC Clock & Wallet
+
+(First?) Libra Hardware wallet. Built on M5SickC devices using KULAP libra services
+
+# Usages
+1. Open M5Stick_Clock_LIbra.ino in Arduino IDE
+2. Change SSID and Passphase for your WIFI (this is using for call libra services)
+3. Upload codes into M5Stack
+3. Enjoy !!
+
+# Screens
+## 1. Clock page
+  
+  Display current Time
+
+  - Press 'HOME' keypad for input PIN
+
+## 2. Login Page
+
+  - Press 'HOME' keypad for Enter PIN
+  - Press 'RST' keypad for shift PIN right
+  - Press 'HOME' and 'RST' keypad for return to clock face  /* For test purpose only */..
+  - Select '<' if you want to delete PIN
+  - Select '/' once you have done enter PIN
+
+## 3. Wallet Page
+
+  Show Libra Address (Full address) with Balance (Offline storage in EEPROM)
+
+  - Press 'HOME' keypad for sign in or sign transaction with web wallet  /* Future function */..
+  - Press 'RST' keypad for return to clock face
+  - Press 'HOME' and 'RST' keypad for RESET all things  /* For test purpose only */..
+
+## 3. Sign Trx Page
+
+  Sign Transaction with Libra-Wallet-POC
+  https://github.com/kulapio/libra-wallet-poc
+
+  Press "Use HW Wallet" when prompt to select and then press 'HOME' button to sync data to Libra-Wallet-POC app
+  Press 'RST' button to exit
+
 # Libra Services
 
 Libra Services from KULAP.io 
